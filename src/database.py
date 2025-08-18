@@ -1,0 +1,1 @@
+# Database operations module for real-time data pipeline
