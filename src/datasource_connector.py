@@ -3,6 +3,8 @@ import os
 import shutil
 import config
 
+# TODO: convert it to function to run as pipeline module for real-time data pipeline
+
 # Get the project root directory (parent of src)
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(project_root, "data")
