@@ -1,3 +1,5 @@
 /venv_data_etl/
 .idea/
 __pycache__/
+*.log
+logs/
