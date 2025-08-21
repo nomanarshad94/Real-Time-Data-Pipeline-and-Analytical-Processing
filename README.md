@@ -105,13 +105,6 @@ task for Bosch** to demonstrate capabilities in data engineering, scalability, a
 
 ---
 
-## Steps to create a real-time data processing pipeline project structure (brainstorming)
-
-1. Set a project directory structure for a real-time data processing pipeline.
-2. Include directories for data, quarantine, processed files, logs, source code, tests, and configuration.
-3. Create data_connector to ingest raw data from kaggle and store it in data directory
-
-
 ## 📂 Project Structure
 ```plaintext
 real-time-pipeline/
