@@ -89,6 +89,10 @@ class DataPipeline:
 
             logger.info(f"Validation passed for {file_name}: {len(df_valid)} valid rows")
 
+            # Step 3: Transform data
+            logger.info(f"Transforming data from {file_name}")
+            df_transformed = transformer.transform_data(df_valid, file_name, data_source)
+            logger.info(f"Transformation completed for {file_name}")
 
             return True
 
