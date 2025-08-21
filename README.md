@@ -75,11 +75,35 @@ task for Bosch** to demonstrate capabilities in data engineering, scalability, a
 ## 🛠️ Tech Stack
 - **Language:** Python  
 - **Libraries:** Pandas, SQLAlchemy, Watchdog (file monitoring), Logging  
-- **Database:** MySQL (preferred) or PostgreSQL  
+- **Database:**  PostgreSQL  
 - **Optional for Scale:** Apache Kafka, Apache Spark, Airflow, Docker  
 
 ---
+## System Architecture
 
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
+│   Data      │───▶│   Monitor    │───▶│  Validator  │───▶│ Transformer  │
+│   Sources   │    │   Service    │    │   Engine    │    │    Engine    │
+└─────────────┘    └──────────────┘    └─────────────┘    └──────────────┘
+                           │                   │                   │
+                           ▼                   ▼                   ▼
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
+│    Logs     │◀───│  Analytics   │◀───│  Database   │◀───│   Processed  │
+│   System    │    │   Engine     │    │   Layer     │    │     Data     │
+└─────────────┘    └──────────────┘    └─────────────┘    └──────────────┘
+```
+
+### Key Components
+
+- **🔍 File Monitor**: Real-time directory watching with watchdog/polling fallback
+- **✅ Data Validator**: Multi-stage validation (structure, types, ranges, business rules)
+- **🔄 Data Transformer**: Standardization, normalization, feature engineering
+- **📊 Analytics Engine**: Statistical analysis, anomaly detection, temporal patterns
+- **🗄️ Database Layer**: Optimized PostgreSQL with proper indexing and relationships
+- **📋 Logging System**: Structured logging with rotation and component specific handlers
+
+---
 
 ## Steps to create a real-time data processing pipeline project structure (brainstorming)
 
