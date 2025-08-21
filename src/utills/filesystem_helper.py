@@ -1,10 +1,10 @@
 import os
-import logging
 import pandas as pd
 from datetime import datetime
 from config import config
+from logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # Utility functions

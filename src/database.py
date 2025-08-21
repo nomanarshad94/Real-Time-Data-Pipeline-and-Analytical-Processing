@@ -163,19 +163,19 @@ class DatabaseManager:
         finally:
             session.close()
 
-    def get_sensor_statistics(self, sensor_type: Optional[str] = None) -> pd.DataFrame:
-        """Retrieve sensor statistics"""
+    def get_location_statistics(self, location_id: Optional[str] = None) -> pd.DataFrame:
+        """Retrieve location statistics"""
         session = self.get_session()
         try:
             query = session.query(AggregatedMetrics)
-            if sensor_type:
-                query = query.filter(AggregatedMetrics.sensor_type == sensor_type)
+            if location_id:
+                query = query.filter(AggregatedMetrics.location_id == location_id)
 
             results = query.all()
             data = []
             for result in results:
                 data.append({
-                    'sensor_type': result.sensor_type,
+                    'location_id': result.location_id,
                     'metric_name': result.metric_name,
                     'min_value': result.min_value,
                     'max_value': result.max_value,
