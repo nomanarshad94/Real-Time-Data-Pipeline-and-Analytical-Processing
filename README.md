@@ -192,6 +192,63 @@ RETRY_DELAY = 5                      # Retry delay (seconds)
 POLLING_INTERVAL = 10                # File monitoring interval
 ```
 
+## 🗄️ Database Schema
+
+The pipeline uses a PostgreSQL database with two optimized tables. See `iot_sensor_db_schema.sql` for the complete schema.
+
+### **Table Structure:**
+
+#### `raw_sensor_data` - IoT Environmental & Mental Health Data
+```sql
+-- Core identifiers
+location_id           VARCHAR(50) NOT NULL
+timestamp            TIMESTAMP NOT NULL
+
+-- Environmental metrics  
+temperature_celsius   REAL
+humidity_percent      REAL
+air_quality_index     INTEGER
+noise_level_db        REAL
+lighting_lux          REAL
+crowd_density         INTEGER
+
+-- Mental health indicators
+stress_level          INTEGER
+sleep_hours           REAL
+mood_score            REAL
+mental_health_status  INTEGER  -- 0: Normal, 1: Issue
+
+-- Processing metadata
+file_name             VARCHAR(255) NOT NULL
+data_source           VARCHAR(100) NOT NULL
+processed_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+#### `aggregated_metrics` - Statistical Analysis Results
+```sql
+-- Grouping identifiers
+location_id           VARCHAR(50) NOT NULL
+metric_name           VARCHAR(50) NOT NULL  -- temperature_celsius, etc.
+
+-- Statistical metrics
+min_value             REAL
+max_value             REAL
+avg_value             REAL
+std_value             REAL
+count                 INTEGER
+
+-- Processing metadata
+data_source           VARCHAR(100) NOT NULL
+file_name             VARCHAR(255) NOT NULL
+timestamp            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+### **Optimized Indexes:**
+- `idx_raw_location_id` - Location-based analytics
+- `idx_raw_timestamp` - Time-series queries  
+- `idx_agg_location_metric` - Aggregated metrics lookup
+
+
 ## 📊 Example SQL Queries for Data Analysis
 
 ### Raw Environmental Data Analysis
