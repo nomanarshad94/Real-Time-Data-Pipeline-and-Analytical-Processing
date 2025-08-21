@@ -78,6 +78,16 @@ class DataPipeline:
                 logger.warning(f"File {file_name} is empty, skipping")
                 return False
 
+            # Step 2: Validate data
+            logger.info(f"Validating data from {file_name}")
+            df_valid, is_valid = validator.validate_data(df, file_path)
+
+            if not is_valid or df_valid.empty:
+                logger.error(f"Validation failed for {file_name}")
+                self.failed_count += 1
+                return False
+
+            logger.info(f"Validation passed for {file_name}: {len(df_valid)} valid rows")
 
 
             return True
