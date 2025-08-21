@@ -1,7 +1,8 @@
 # Advanced Real-Time Data Pipeline and Analytical Processing
 
 A scalable real-time data pipeline that monitors a directory for incoming sensor data, validates and transforms it, computes aggregated metrics, and stores the results in a relational database for further analysis.  
-This project was developed as part of a **task for Bosch** to demonstrate capabilities in data engineering, scalability, and analytical processing.
+This project was developed as part of a **
+task for Bosch** to demonstrate capabilities in data engineering, scalability, and analytical processing.
 
 ---
 
@@ -28,9 +29,16 @@ This project was developed as part of a **task for Bosch** to demonstrate capabi
 - Automatically triggers processing on detection of new files.  
 
 ### 2. Data Source
-- Uses publicly available **sensor datasets** (e.g., Kaggle, UCI ML Repository, AWS Public Datasets).  
-- Simulates real-world IoT environments with temperature, humidity, and pressure readings.  
-- Random missing or corrupt data points are introduced to mimic real-world issues.  
+- **IoT Environmental Dataset**: Uses Kaggle's IoT-based environmental dataset  
+- **Data Schema**: 
+  ```
+  timestamp, location_id, temperature_celsius, humidity_percent, 
+  air_quality_index, noise_level_db, lighting_lux, crowd_density, 
+  stress_level, sleep_hours, mood_score, mental_health_status
+  ```
+- **Data Types**: Environmental metrics and mental health indicators
+- **Location-based**: Data organized by location_id for spatial analysis
+- **Real-world Simulation**: Random missing or corrupt data points are introduced to mimic real-world issues.
 
 ### 3. Data Validation & Transformation
 - **Validation checks**:  
@@ -118,11 +126,54 @@ real-time-pipeline/
    pip install -r requirements.txt
    ```
 3. **Configure Database**
-   - Update src/config.py with database credentials and monitored directory path.
+   ```bash
+   # PostgreSQL setup
+   createdb iot_sensor_db
+   ```
+    - Update src/config.py with database credentials and monitored directory path.
+
 4. **Run the Pipeline**
    ```bash
+   # Process single file
+   python src/main.py --file path/to/data.csv
+   
+   # Start continuous monitoring
    python src/main.py
-    ```
+
+   # Check pipeline status
+   python src/main.py --status
+   ```
+
+## 🔧 Configuration
+
+The pipeline is configured through `src/config.py` and environment variables:
+
+```python
+# Key Configuration Parameters
+DATA_DIR = "data/"                    # Input directory
+QUARANTINE_DIR = "quarantine/"        # Invalid files
+PROCESSED_DIR = "processed/"          # Processed files archive
+LOGS_DIR = "logs/"                    # Log files
+
+# Validation Ranges (IoT Environmental Data)
+TEMP_MIN = -50.0                     # Minimum temperature (°C)
+TEMP_MAX = 60.0                      # Maximum temperature (°C)
+HUMIDITY_MIN = 0.0                   # Minimum humidity (%)
+HUMIDITY_MAX = 100.0                 # Maximum humidity (%)
+AIR_QUALITY_MIN = 0                  # Minimum AQI
+AIR_QUALITY_MAX = 500                # Maximum AQI
+STRESS_LEVEL_MIN = 0                 # Minimum stress level
+STRESS_LEVEL_MAX = 100               # Maximum stress level
+SLEEP_HOURS_MIN = 0.0                # Minimum sleep hours
+SLEEP_HOURS_MAX = 24.0               # Maximum sleep hours
+MOOD_SCORE_MIN = 0                   # Minimum mood score
+MOOD_SCORE_MAX = 5                   # Maximum mood score
+
+# Pipeline Settings
+MAX_RETRIES = 3                      # Failed operation retries
+RETRY_DELAY = 5                      # Retry delay (seconds)
+POLLING_INTERVAL = 10                # File monitoring interval
+```
 
 ## 📊 Example SQL Queries for Data Analysis
 
@@ -204,12 +255,87 @@ GROUP BY hour_of_day
 ORDER BY hour_of_day;
 ```
   
+## 🚀 Scalability Architecture
+
+### Current Implementation Limitations
+- Single-threaded file processing
+- Local file system monitoring
+- Single database connection
+- Memory-based data processing
+
+### Horizontal Scaling Strategy
+
+#### 1. Distributed Message Streaming
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Kafka     │    │   Kafka     │    │   Kafka     │
+│  Producer   │───▶│   Cluster   │───▶│  Consumer   │
+│             │    │             │    │   Groups    │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+- **Apache Kafka**: Handle millions of files/day with distributed partitioning
+- **Topics**: Separate topics for raw data, validated data, and aggregated metrics
+- **Partitioning**: Location-based partitioning for parallel processing
+- **Consumer Groups**: Multiple processing nodes for high throughput
+
+#### 2. Distributed Processing Framework
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  PySpark    │    │  PySpark    │    │  PySpark    │
+│ Streaming   │    │ Streaming   │    │ Streaming   │
+│  Worker 1   │    │  Worker 2   │    │  Worker N   │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+- **PySpark Streaming**: Real-time processing with micro-batching
+- **Structured Streaming**: Fault-tolerant stream processing
+- **Auto-scaling**: Dynamic resource allocation based on load
+- **State Management**: Exactly-once processing guarantees
+
+#### 3. Cloud-Native Architecture
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   AWS S3    │    │   Lambda    │    │  RDS/Aurora │
+│   Events    │───▶│ Functions   │───▶│  Database   │
+│             │    │             │    │   Cluster   │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+- **AWS Lambda**: Serverless processing with automatic scaling
+- **S3 Event Triggers**: Process files as they arrive
+- **SQS/SNS**: Reliable message queuing and notifications with dead letter queue
+- **RDS Aurora**: Auto-scaling database with read replicas
+
+### Performance Optimizations
+
+#### Data Processing
+- **Parallel Processing**: Multi-threading for CPU-intensive operations
+- **Vectorized Operations**: NumPy/Pandas optimizations
+- **Memory Management**: Chunked processing for large files
+- **Caching**: Redis for frequently accessed aggregations
+
+#### Database Optimizations
+- **Read Replicas**: Separate read/write workloads
+- **Partitioning**: Time-based table partitioning
+- **Connection Pooling**: Efficient database connection management
+- **Materialized Views**: Pre-computed aggregations
+
+#### Monitoring & Observability
+- **Prometheus/Grafana**: Real-time metrics and alerting
+- **Distributed Tracing**: Jaeger for end-to-end visibility
+- **Log Aggregation**: ELK stack for centralized logging
+- **Health Checks**: Automated failure detection and recovery
+
+### Target Performance Metrics
+- **Throughput**: 1M+ files per day
+- **Latency**: < 10 seconds end-to-end processing
+- **Availability**: 99.9% uptime
+- **Scalability**: Linear scaling with added resources
+
 ## 📈 Future Enhancements
-- Containerized deployment using Docker and orchestration with Kubernetes.
-- Real-time dashboard using Streamlit or Grafana. 
-- End-to-end orchestration using Apache Airflow or AWS step functions. 
-- Extend schema with metadata for advanced analytics.
-- Add scalability section with Kafka and Spark.
+- **Real-time Dashboard**: Streamlit/Grafana for live monitoring
+- **Machine Learning**: Predictive analytics for mental health trends
+- **API Gateway**: RESTful APIs for external integrations
+- **Data Lake**: Apache Iceberg for historical data analytics
+- **Edge Computing**: IoT edge processing for reduced latency
 
 ## 📝 License
 This project is licensed under the MIT License. See the LICENSE file for details.
