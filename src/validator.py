@@ -221,15 +221,27 @@ class DataValidator:
 
         logger.info(f"Validation completed for {file_name}: {valid_rows}/{total_rows} rows valid")
 
+        # STRICT VALIDATION: Reject entire file if ANY row fails validation
         if invalid_rows > 0:
-            logger.warning(f"Found {invalid_rows} invalid rows in {file_name}")
-
-        # Quarantine file if too many invalid rows (>50%)
-        if invalid_rows > (total_rows * 0.5):
-            logger.error(f"Too many invalid rows ({invalid_rows}/{total_rows}) in {file_name}, quarantining file")
-            self.quarantine_file(file_path, [f"More than 50% of rows invalid ({invalid_rows}/{total_rows})"])
+            logger.error(f"File rejected: Found {invalid_rows} invalid rows in {file_name}")
+            logger.error(f"STRICT MODE: Rejecting entire file to prevent corrupted data in system")
+            
+            # Quarantine the entire file
+            quarantine_errors = all_errors + [f"File rejected due to {invalid_rows} invalid rows out of {total_rows} total rows"]
+            self.quarantine_file(file_path, quarantine_errors)
             return pd.DataFrame(), False
 
+        #  Allow partial file processing if validated data is more than 50%
+        # if invalid_rows > 0:
+        #     logger.warning(f"Found {invalid_rows} invalid rows in {file_name}")
+        # 
+        # # Quarantine file if too many invalid rows (>50%)
+        # if invalid_rows > (total_rows * 0.5):
+        #     logger.error(f"Too many invalid rows ({invalid_rows}/{total_rows}) in {file_name}, quarantining file")
+        #     self.quarantine_file(file_path, [f"More than 50% of rows invalid ({invalid_rows}/{total_rows})"])
+        #     return pd.DataFrame(), False
+
+        logger.info(f"File validation passed: All {total_rows} rows are valid in {file_name}")
         return df_valid, len(df_valid) > 0
 
     def quarantine_file(self, file_path: str, errors: List[str]):
