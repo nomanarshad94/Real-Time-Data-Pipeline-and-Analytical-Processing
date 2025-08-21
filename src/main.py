@@ -94,6 +94,47 @@ class DataPipeline:
             df_transformed = transformer.transform_data(df_valid, file_name, data_source)
             logger.info(f"Transformation completed for {file_name}")
 
+            # Step 4: Analyze data
+            logger.info(f"Analyzing data from {file_name}")
+            analysis_results = analyzer.analyze_data(df_transformed, file_name, data_source)
+            logger.info(f"Analysis completed for {file_name}")
+
+            # Step 5: Store raw data in database
+            logger.info(f"Storing raw data from {file_name}")
+            raw_success = db_manager.insert_raw_data(df_transformed, file_name, data_source)
+
+            if not raw_success:
+                logger.error(f"Failed to store raw data from {file_name}")
+                self.failed_count += 1
+                return False
+
+            # Step 6: Store aggregated metrics
+            logger.info(f"Storing aggregated metrics from {file_name}")
+            if analysis_results.get('aggregated_metrics'):
+                agg_success = db_manager.insert_aggregated_data(
+                    analysis_results['aggregated_metrics'],
+                    file_name,
+                    data_source
+                )
+
+                if not agg_success:
+                    logger.error(f"Failed to store aggregated metrics from {file_name}")
+                    self.failed_count += 1
+                    return False
+
+            # Step 7: Save analysis report
+            analyzer.save_analysis_report(analysis_results)
+
+            # Step 8: Archive processed file
+            move_processed_file(file_path)
+
+            # Update statistics
+            processing_time = time.time() - start_time
+            self.processed_count += 1
+
+            logger.info(f"Successfully processed {file_name} in {processing_time:.2f} seconds")
+            logger.info(f"Pipeline statistics: {self.processed_count} processed, {self.failed_count} failed")
+
             return True
 
         except Exception as e:
