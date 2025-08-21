@@ -1,7 +1,7 @@
 # Advanced Real-Time Data Pipeline and Analytical Processing
 
 A scalable real-time data pipeline that monitors a directory for incoming sensor data, validates and transforms it, computes aggregated metrics, and stores the results in a relational database for further analysis.  
-This project was developed as part of a **pre-interview task for Bosch** to demonstrate capabilities in data engineering, scalability, and analytical processing.
+This project was developed as part of a **task for Bosch** to demonstrate capabilities in data engineering, scalability, and analytical processing.
 
 ---
 
@@ -125,20 +125,84 @@ real-time-pipeline/
     ```
 
 ## 📊 Example SQL Queries for Data Analysis
-- Daily record counts:
-    ```sql
-    SELECT DATE(timestamp) AS day, COUNT(*) 
-    FROM raw_data
-    GROUP BY day 
-    ORDER BY day;
-    ```
 
-- Sensor statistics
-    ```sql
-    SELECT sensor_type, AVG(reading) AS avg_val, MAX(reading) AS max_val, MIN(reading) AS min_val
-    FROM raw_data
-    GROUP BY sensor_type;
-  ```
+### Raw Environmental Data Analysis
+```sql
+-- Daily record counts by location
+SELECT DATE(timestamp) AS day, location_id, COUNT(*) as record_count
+FROM raw_sensor_data
+GROUP BY day, location_id 
+ORDER BY day, location_id;
+```
+
+```sql
+-- Average environmental conditions by location
+SELECT location_id,
+    AVG(temperature_celsius) AS avg_temp,
+    AVG(humidity_percent) AS avg_humidity,
+    AVG(air_quality_index) AS avg_aqi,
+    AVG(noise_level_db) AS avg_noise,
+    AVG(lighting_lux) AS avg_lighting
+FROM raw_sensor_data
+GROUP BY location_id;
+```
+
+```sql
+-- Mental health indicators by location
+SELECT location_id,
+    AVG(stress_level) AS avg_stress,
+    AVG(sleep_hours) AS avg_sleep,
+    AVG(mood_score) AS avg_mood,
+    SUM(CASE WHEN mental_health_status = 1 THEN 1 ELSE 0 END) AS mental_health_issues,
+    COUNT(*) AS total_records
+FROM raw_sensor_data
+GROUP BY location_id;
+```
+
+```sql
+-- Environmental conditions affecting mental health
+SELECT 
+    CASE 
+        WHEN air_quality_index < 50 THEN 'Good'
+        WHEN air_quality_index < 100 THEN 'Moderate'
+        WHEN air_quality_index < 150 THEN 'Unhealthy for Sensitive'
+        ELSE 'Unhealthy'
+    END AS air_quality_category,
+    AVG(stress_level) AS avg_stress,
+    AVG(mood_score) AS avg_mood,
+    COUNT(*) as record_count
+FROM raw_sensor_data
+GROUP BY air_quality_category;
+```
+
+### Aggregated Metrics Analysis
+```sql
+-- Latest aggregated metrics by location
+SELECT am.location_id, am.metric_name, 
+    am.min_value, am.max_value, am.avg_value, am.std_value
+FROM aggregated_metrics am
+INNER JOIN (
+    SELECT location_id, metric_name, MAX(timestamp) as latest_time
+    FROM aggregated_metrics
+    GROUP BY location_id, metric_name
+) latest ON am.location_id = latest.location_id 
+    AND am.metric_name = latest.metric_name 
+    AND am.timestamp = latest.latest_time;
+```
+
+### Time-based Analysis
+```sql
+-- Hourly patterns of environmental and mental health data
+SELECT 
+    EXTRACT(HOUR FROM timestamp) AS hour_of_day,
+    AVG(temperature_celsius) AS avg_temp,
+    AVG(stress_level) AS avg_stress,
+    AVG(mood_score) AS avg_mood,
+    COUNT(*) AS record_count
+FROM raw_sensor_data
+GROUP BY hour_of_day
+ORDER BY hour_of_day;
+```
   
 ## 📈 Future Enhancements
 - Containerized deployment using Docker and orchestration with Kubernetes.
