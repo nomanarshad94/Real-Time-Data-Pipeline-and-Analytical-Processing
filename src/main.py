@@ -78,7 +78,21 @@ class DataPipeline:
                 logger.warning(f"File {file_name} is empty, skipping")
                 return False
 
+            # Step 2: Validate data
+            logger.info(f"Validating data from {file_name}")
+            df_valid, is_valid = validator.validate_data(df, file_path)
 
+            if not is_valid or df_valid.empty:
+                logger.error(f"Validation failed for {file_name}")
+                self.failed_count += 1
+                return False
+
+            logger.info(f"Validation passed for {file_name}: {len(df_valid)} valid rows")
+
+            # Step 3: Transform data
+            logger.info(f"Transforming data from {file_name}")
+            df_transformed = transformer.transform_data(df_valid, file_name, data_source)
+            logger.info(f"Transformation completed for {file_name}")
 
             return True
 
